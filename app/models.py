@@ -71,4 +71,13 @@ class Uzivatele(Base):
     surename = Column(String(50), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
+class Logins(Base):
+    __tablename__ = "logins"
+    logins_id = Column(Integer, primary_key=True)
+    jmeno = Column(String(50), nullable=False)
+    prijmeni = Column(String(50), nullable=False)
+    trida = Column(String(50), nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
+    def __repr__(self):
+        return f"<Logins {self.jmeno} {self.prijmeni} {self.trida}>"

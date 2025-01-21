@@ -1,0 +1,65 @@
+{% from "macros/fields.html" import render_input_field, render_submit %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Přihlášení</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="center-container">
+        <h1>Přihlášení</h1>
+
+        {% block content %}
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ render_input_field(form.jmeno) }}
+            </p>
+            <p>
+                {{ render_input_field(form.prijmeni) }}
+            </p>
+            <p>
+                {{ render_input_field(form.trida) }}
+            </p>
+            <p>
+                {{ render_submit('Poslat') }}
+            </p>
+        </form>
+
+        <h2>List přihlášení</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Jméno</th>
+                    <th>Příjmení</th>
+                    <th>Třída</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for index, login in enumerate(logins_list, start=1) %}
+                    <tr>
+                        <td>{{ index }}</td>
+                        <td>{{ login.jmeno }}</td>
+                        <td>{{ login.prijmeni }}</td>
+                        <td>{{ login.trida }}</td>
+                        <td>
+                            <a href="{{ url_for('routes.edit_login', login_id=login.logins_id) }}" style="display:inline;">
+                                <button type="button">Edit</button>
+                            </a>
+                            <form action="{{ url_for('routes.delete_login', login_id=login.logins_id) }}" method="post" style="display:inline;">
+                                <input type="submit" value="Smazat">
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endblock %}
+    </div>
+</body>
+</html>

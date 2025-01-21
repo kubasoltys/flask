@@ -1,7 +1,7 @@
 # Standard Library imports
 
 # Core Flask imports
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 
 # Third-party imports
 
@@ -13,7 +13,8 @@ from .views import (
     account_management_views,
     static_views,
 )
-from .models import User,Uzivatele
+from .models import User,Uzivatele, Logins
+from sqlalchemy.sql import func
 
 bp = Blueprint('routes', __name__)
 
@@ -89,3 +90,52 @@ bp.add_url_rule(
 
 # Admin required
 bp.add_url_rule("/admin", view_func=static_views.admin)
+
+class LoginsForm(FlaskForm):
+    jmeno = StringField('Jméno', validators=[InputRequired(message="You can't leave this empty")])
+    prijmeni = StringField('Příjmení', validators=[InputRequired(message="You can't leave this empty")])
+    trida = StringField('Třída', validators=[InputRequired(message="You can't leave this empty")])
+
+#login a list
+@bp.route("/logins", methods=["GET", "POST"])
+def logins():
+    form = LoginsForm()
+    if form.validate_on_submit():
+        new_login = Logins(
+            jmeno=form.jmeno.data,
+            prijmeni=form.prijmeni.data,
+            trida=form.trida.data,
+            created_at=func.now()
+        )
+        db_manager.session.add(new_login)
+        db_manager.session.commit()
+        
+    logins_list = db_manager.session.query(Logins).all()
+    return render_template("logins.html", form=form, logins_list=logins_list, enumerate=enumerate)
+
+#smazani
+@bp.route("/logins/delete/<int:login_id>", methods=["POST"])
+def delete_login(login_id):
+    login_to_delete = db_manager.session.query(Logins).get(login_id)
+    if login_to_delete:
+        db_manager.session.delete(login_to_delete)
+        db_manager.session.commit()
+    return redirect(url_for("routes.logins"))
+
+#editace
+@bp.route("/logins/edit/<int:login_id>", methods=["GET", "POST"])
+def edit_login(login_id):
+    login_to_edit = db_manager.session.query(Logins).get(login_id)
+    if not login_to_edit:
+        return redirect(url_for("routes.logins"))
+
+    form = LoginsForm(obj=login_to_edit)
+    if form.validate_on_submit():
+        login_to_edit.jmeno = form.jmeno.data
+        login_to_edit.prijmeni = form.prijmeni.data
+        login_to_edit.trida = form.trida.data
+        db_manager.session.commit()
+        return redirect(url_for("routes.logins"))
+
+    logins_list = db_manager.session.query(Logins).all()
+    return render_template("logins.html", form=form, logins_list=logins_list, enumerate=enumerate, edit_login_id=login_id)
