@@ -23,6 +23,7 @@ db = db_manager.session
 from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField,DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length,InputRequired
+from wtforms.validators import ValidationError
 
 class FormFormular(FlaskForm):
     name = StringField('Name', validators=[ InputRequired(message="You can't leave this empty")])
@@ -91,12 +92,23 @@ bp.add_url_rule(
 # Admin required
 bp.add_url_rule("/admin", view_func=static_views.admin)
 
-class LoginsForm(FlaskForm):
-    jmeno = StringField('Jméno', validators=[InputRequired(message="You can't leave this empty")])
-    prijmeni = StringField('Příjmení', validators=[InputRequired(message="You can't leave this empty")])
-    trida = StringField('Třída', validators=[InputRequired(message="You can't leave this empty")])
+def validate_jmeno(form, field):
+    if not field.data.isalpha():
+        raise ValidationError("Jméno musí obsahovat pouze písmena")
 
-#login a list
+def validate_prijmeni(form, field):
+    if not field.data.isalpha():
+        raise ValidationError("Příjmení musí obsahovat pouze písmena")
+
+def validate_trida(form, field):
+    if not field.data.isalnum():
+        raise ValidationError("Třída musí obsahovat pouze písmena a čísla")
+
+class LoginsForm(FlaskForm):
+    jmeno = StringField('Jméno', validators=[InputRequired(message="You can't leave this empty"), validate_jmeno])
+    prijmeni = StringField('Příjmení', validators=[InputRequired(message="You can't leave this empty"), validate_prijmeni])
+    trida = StringField('Třída', validators=[InputRequired(message="You can't leave this empty"), validate_trida])
+
 @bp.route("/logins", methods=["GET", "POST"])
 def logins():
     form = LoginsForm()
@@ -113,7 +125,6 @@ def logins():
     logins_list = db_manager.session.query(Logins).all()
     return render_template("logins.html", form=form, logins_list=logins_list, enumerate=enumerate)
 
-#smazani
 @bp.route("/logins/delete/<int:login_id>", methods=["POST"])
 def delete_login(login_id):
     login_to_delete = db_manager.session.query(Logins).get(login_id)
@@ -122,7 +133,6 @@ def delete_login(login_id):
         db_manager.session.commit()
     return redirect(url_for("routes.logins"))
 
-#editace
 @bp.route("/logins/edit/<int:login_id>", methods=["GET", "POST"])
 def edit_login(login_id):
     login_to_edit = db_manager.session.query(Logins).get(login_id)
